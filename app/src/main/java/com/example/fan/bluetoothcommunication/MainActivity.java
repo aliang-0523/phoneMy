@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
     private ArrayAdapter<String> listAdapter;
     private List<BluetoothDevice> deviceList;
 
-    String s=null;
     /**
      * The {@link ViewPager} that will host the section contents.
      */
@@ -134,8 +133,7 @@ public class MainActivity extends AppCompatActivity {
             bluetoothAdapter.startDiscovery();//开启被发现
             //found device
             ////定义了BroadcastReceiver对象receiver,就可以来使用它来监听蓝牙查找情况
-            IntentFilter intentFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(receiver, intentFilter);
+
         }
         catch (RuntimeException e){
             Log.i("myerror","程序意外崩溃");
@@ -143,8 +141,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
+    protected void onResume() {
+        IntentFilter intentFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(receiver, intentFilter);
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
         unregisterReceiver(receiver);
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
         super.onStop();
     }
 
