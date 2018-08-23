@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_enabled="false"  android:drawable="@android:drawable/checkbox_on_background"/>
+    <item  android:state_enabled="true" android:drawable="@android:drawable/sym_call_outgoing"/>
+</selector>
