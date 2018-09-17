@@ -90,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
 
     Vibrator vibrator;
     public  void initEvent(){
-
         btnSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -167,7 +166,9 @@ public class MainActivity extends AppCompatActivity {
                 if (intent.getAction() == BluetoothDevice.ACTION_FOUND) {
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                     deviceList.add(device);
-                    listAdapter.add(device.getName());
+                    if(device.getName()!=null) {
+                        listAdapter.add(device.getName());
+                    }
                 } else if (intent.getAction() == BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
                     Toast.makeText(MainActivity.this, "搜索完成", Toast.LENGTH_SHORT).show();
             }
