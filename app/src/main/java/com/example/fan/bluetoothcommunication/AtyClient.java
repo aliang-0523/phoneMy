@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Criteria;
@@ -17,9 +16,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
-import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
@@ -34,6 +31,7 @@ import org.achartengine.GraphicalView;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Timer;
 
 
 /**
@@ -47,17 +45,14 @@ public class AtyClient extends Activity {
     private TextView tvTitle, tvContent;
     private boolean isConnected;
     private BluetoothDevice device;
-    public static boolean cancel=false;
     private ClientThread clientThread;
-
-
-    public static String[] chooseMenu={"*Left variant tract","*Right variant tract","*Left turn","*Right turn","*Left bend","*Right bend","*Straight"};
 
     private LinearLayout xCurveLayout;// 存放x轴图表的布局容器
     private LinearLayout yCurveLayout;// 存放y轴图表的布局容器
 
     private GraphicalView mView, mView2;// 左右图表
     private ChartService mService, mService2;
+    private Timer timer;
 
     private Vibrator vibrator;
     @Override
@@ -138,79 +133,18 @@ public class AtyClient extends Activity {
         btnToggle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    if (TextUtils.equals(btnToggle.getText(), "启动")) {
-                        if (cancel) {
-                            if (clientThread.filename.exists()) {
-                                clientThread.filename.delete();
-                            }
-                        }
-                        btnToggle.setText("停止");
-                        clientThread.addFileNumber();
-                        clientThread.PAUSE_WRITE = false; //将加速度传感器数据写入文档的标志位
-                        isWritingGPS = true; //将GPS数据写入文档的标志位
-                    } else {
-                        showSingleChoiceDialog(AtyClient.this);
-                        btnToggle.setText("启动");
-                        clientThread.PAUSE_WRITE = true;
-                        isWritingGPS = false;
-                    }
-                }
-                catch (RuntimeException e){
-                    Log.i("myerror","程序意外崩溃");
+                if (TextUtils.equals(btnToggle.getText(), "启动")) {
+                    btnToggle.setText("停止");
+                    clientThread.addFileNumber();
+                    clientThread.PAUSE_WRITE = false; //将加速度传感器数据写入文档的标志位
+                    isWritingGPS = true; //将GPS数据写入文档的标志位
+                } else {
+                    btnToggle.setText("启动");
+                    clientThread.PAUSE_WRITE = true;
+                    isWritingGPS = false;
                 }
             }
         });
-    }
-
-    public void showSingleChoiceDialog(final Context context) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("单选对话框");
-        builder.setIcon(R.mipmap.ic_launcher);
-        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                cancel=true;
-                clientThread.PAUSE_WRITE = true;
-                isWritingGPS = false;
-            }
-        });
-        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                cancel=false;
-                clientThread.PAUSE_WRITE = true;
-                isWritingGPS = false;
-                try {
-                    // 打开一个随机访问文件流，按读写方式
-                    RandomAccessFile randomFile = new RandomAccessFile(clientThread.filename, "rw");
-                    // 文件长度，字节数
-                    long fileLength = randomFile.length();
-                    // 将写文件指针移到文件尾。
-                    randomFile.seek(fileLength);
-                    randomFile.write(AtyClient.chooseMenu[ClientThread.n].getBytes());
-                    randomFile.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        builder.setSingleChoiceItems(chooseMenu, 0, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String str = chooseMenu[which];
-                Toast.makeText(context, str + "被点击了", Toast.LENGTH_SHORT).show();
-                ClientThread.n=which;
-                Log.i("test","文件名Aty"+ClientThread.n);
-            }
-        });
-
-
-
-        AlertDialog dialog = builder.create();
-
-        dialog.show();
-
     }
 
 
@@ -400,7 +334,6 @@ public class AtyClient extends Activity {
 
     private boolean isWritingGPS;
 
-
     private void updata(Location location) {
 //        Toast.makeText(AtyClient.this, "speed:" + location.getSpeed(), Toast.LENGTH_SHORT).show();
         if (isWritingGPS) {
@@ -460,10 +393,9 @@ public class AtyClient extends Activity {
         String[] datas = sensorData.split(" ");
         mService.updateChart(t, Double.parseDouble(datas[2]));
         mService2.updateChart(t, Double.parseDouble(datas[3]));
-        t += 2.1;
+        t += 2.5;
 
     }
-
 
 
   /*  private void drawPicture (String sensorData ){

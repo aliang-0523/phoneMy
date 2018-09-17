@@ -16,7 +16,6 @@ import java.util.List;
 
 public class ChartService {
 
-    private static final double Max_Point=100;
 	private GraphicalView mGraphicalView;  //图表控件
 	private XYMultipleSeriesDataset multipleSeriesDataset;//数据集容器
 	private XYMultipleSeriesRenderer multipleSeriesRenderer;// 渲染器容器
@@ -119,18 +118,9 @@ public class ChartService {
 	 *            新加点的y坐标
 	 */
 	public void updateChart(double x, double y) {
-        mSeries.add(x, y);
-        if (x < Max_Point) {
-            multipleSeriesRenderer.setXAxisMin(0);
-            multipleSeriesRenderer.setXAxisMax(Max_Point);
-        } else {
-            multipleSeriesRenderer.setXAxisMin(mSeries.getItemCount()*2 - Max_Point);
-            multipleSeriesRenderer.setXAxisMax(mSeries.getItemCount()*2);
-        }
-
-        mGraphicalView.repaint();
+		mSeries.add(x, y);
 		//mGraphicalView.repaint();
-		//mGraphicalView.invalidate();
+		mGraphicalView.invalidate();
 	}
 
 	/**

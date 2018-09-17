@@ -58,38 +58,33 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void initView (){
-        try {
-            timeStart = CurentTimeString.getTime1();
+        timeStart = CurentTimeString.getTime1();
 
 
-            setContentView(R.layout.activity_main);
-            btnSearch = (Button) findViewById(R.id.btnSearch);
-            listView = (ListView) findViewById(R.id.lvDevice);
-            //获得蓝牙服务
-            bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            //设备列表的适配器
-            listAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-            //设备列表数据
-            deviceList = new ArrayList<>();
+        setContentView(R.layout.activity_main);
+        btnSearch = (Button) findViewById(R.id.btnSearch);
+        listView = (ListView) findViewById(R.id.lvDevice);
+        //获得蓝牙服务
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        //设备列表的适配器
+        listAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        //设备列表数据
+        deviceList = new ArrayList<>();
 
-            if(listAdapter!=null) {
-                listView.setAdapter(listAdapter);
-            }
-            timeEnd = CurentTimeString.getTime1();
-            Log.e("hah", "time:" + (timeEnd - timeStart));
+        listView.setAdapter(listAdapter);
+
+        timeEnd = CurentTimeString.getTime1();
+        Log.e("hah", "time:" + (timeEnd - timeStart));
 //        Toast.makeText(this, "左变道"+"  检测时长：" + (timeEnd- timeStart )+"毫秒", Toast.LENGTH_LONG).show();
 //
 //        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 //        getSystemService(VIBRATOR_SERVICE);//获得一个震动的服务
 //        vibrator.vibrate(2000);
-        }
-        catch (RuntimeException e){
-            Log.i("myerror","程序意外崩溃");
-        }
 }
 
     Vibrator vibrator;
     public  void initEvent(){
+
         btnSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -117,43 +112,27 @@ public class MainActivity extends AppCompatActivity {
 
     //搜寻蓝牙设备
     private void search() {
-        try{
-            deviceList.clear();
-            listAdapter.clear();
-            //判断蓝牙是否开启
-            if (!bluetoothAdapter.isEnabled())
-                bluetoothAdapter.enable();//开启蓝牙
-            //判断蓝牙是否设置为被其他蓝牙设备可发现
-            if (!bluetoothAdapter.isDiscovering()) {
-                Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-                i.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120000);//设置可被发现的事件
-                startActivity(i);//弹出一个对话框，询问是否允许被发现
-            }
-            bluetoothAdapter.startDiscovery();//开启被发现
-            //found device
-            ////定义了BroadcastReceiver对象receiver,就可以来使用它来监听蓝牙查找情况
-
+        deviceList.clear();
+        listAdapter.clear();
+        //判断蓝牙是否开启
+        if (!bluetoothAdapter.isEnabled())
+            bluetoothAdapter.enable();//开启蓝牙
+        //判断蓝牙是否设置为被其他蓝牙设备可发现
+        if (!bluetoothAdapter.isDiscovering()) {
+            Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+            i.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 120000);//设置可被发现的事件
+            startActivity(i);//弹出一个对话框，询问是否允许被发现
         }
-        catch (RuntimeException e){
-            Log.i("myerror","程序意外崩溃");
-        }
-    }
-
-    @Override
-    protected void onResume() {
+        bluetoothAdapter.startDiscovery();//开启被发现
+        //found device
+        ////定义了BroadcastReceiver对象receiver,就可以来使用它来监听蓝牙查找情况
         IntentFilter intentFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(receiver, intentFilter);
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        unregisterReceiver(receiver);
-        super.onPause();
     }
 
     @Override
     protected void onStop() {
+        unregisterReceiver(receiver);
         super.onStop();
     }
 
@@ -162,19 +141,12 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            try{
-                if (intent.getAction() == BluetoothDevice.ACTION_FOUND) {
-                    BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    deviceList.add(device);
-                    if(device.getName()!=null) {
-                        listAdapter.add(device.getName());
-                    }
-                } else if (intent.getAction() == BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-                    Toast.makeText(MainActivity.this, "搜索完成", Toast.LENGTH_SHORT).show();
-            }
-           catch (RuntimeException e){
-               Log.i("myerror","程序意外崩溃");
-            }
+            if (intent.getAction() == BluetoothDevice.ACTION_FOUND) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                deviceList.add(device);
+                listAdapter.add(device.getName());
+            } else if (intent.getAction() == BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+                Toast.makeText(MainActivity.this, "搜索完成", Toast.LENGTH_SHORT).show();
         }
     };
 

@@ -7,11 +7,8 @@ import android.content.SharedPreferences;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.text.BoringLayout;
 import android.util.Log;
-import android.widget.Switch;
 
-import com.example.fan.bluetoothcommunication.AtyClient;
 import com.example.fan.bluetoothcommunication.Complex;
 import com.example.fan.bluetoothcommunication.Config;
 import com.example.fan.bluetoothcommunication.CurentTimeString;
@@ -40,8 +37,6 @@ public class ClientThread extends Thread {
     private BluetoothSocket socket;
     private boolean isStopReading;
     private Context mContext;
-    public static int n;
-
     private List<MyData> mCurrentMyData;
 
     public static class MyData {
@@ -58,7 +53,7 @@ public class ClientThread extends Thread {
 
 
     public int number;
-    public File filename;
+    File filename;
     File filename1;
     File filename2;
 
@@ -145,7 +140,6 @@ public class ClientThread extends Thread {
                 e.printStackTrace();
             }
         }
-
     }
 
     //数据能量数组
@@ -626,10 +620,9 @@ public class ClientThread extends Thread {
         else{
 
         }
-        Log.i("test","文件名Client"+n);
-        filename = new File(Environment.getExternalStorageDirectory(), "/sensor/" +number + ".txt");
-        filename1 = new File(Environment.getExternalStorageDirectory(), "/sensor/陀螺仪" +number + ".txt");
-        filename2 = new File(Environment.getExternalStorageDirectory(), "/sensor/线性加速度" +number + ".txt");
+        filename = new File(Environment.getExternalStorageDirectory(), "/sensor/" + number + ".txt");
+        filename1 = new File(Environment.getExternalStorageDirectory(), "/sensor/陀螺仪" + number + ".txt");
+        filename2 = new File(Environment.getExternalStorageDirectory(), "/sensor/线性加速度" + number + ".txt");
         //// TODO: 2015/12/23
         //创建三个文件 储存三个传感器的数据
         // OutputStream out=null;
@@ -661,7 +654,9 @@ public class ClientThread extends Thread {
         //
         //            method3(filename2, a);
         //        }
-            method3(filename, a);
+
+
+        method3(filename, a);
 
 
     }
@@ -724,13 +719,13 @@ public class ClientThread extends Thread {
         //    if(!isWrite) return ;
         try {
             // 打开一个随机访问文件流，按读写方式
-                RandomAccessFile randomFile = new RandomAccessFile(fileName, "rw");
-                // 文件长度，字节数
-                long fileLength = randomFile.length();
-                // 将写文件指针移到文件尾。
-                randomFile.seek(fileLength);
-                randomFile.writeBytes(content + "\r\n");
-                randomFile.close();
+            RandomAccessFile randomFile = new RandomAccessFile(fileName, "rw");
+            // 文件长度，字节数
+            long fileLength = randomFile.length();
+            // 将写文件指针移到文件尾。
+            randomFile.seek(fileLength);
+            randomFile.writeBytes(content + "\r\n");
+            randomFile.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
