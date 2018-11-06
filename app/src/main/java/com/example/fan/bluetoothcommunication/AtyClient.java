@@ -51,7 +51,7 @@ public class AtyClient extends Activity {
     private ClientThread clientThread;
 
 
-    public static String[] chooseMenu={"*Left variant tract","*Right variant tract","*Left turn","*Right turn","*Left bend","*Right bend","*Straight"};
+    public static String[] chooseMenu={"左变道","右变道","左弯道","右弯道"};
 
     private LinearLayout xCurveLayout;// 存放x轴图表的布局容器
     private LinearLayout yCurveLayout;// 存放y轴图表的布局容器
@@ -60,6 +60,7 @@ public class AtyClient extends Activity {
     private ChartService mService, mService2;
 
     private Vibrator vibrator;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,6 +72,7 @@ public class AtyClient extends Activity {
         //  initEvent();
 
     }
+
 
 
     private void initView() {
@@ -130,7 +132,6 @@ public class AtyClient extends Activity {
 
 
     private void initData() {
-
         //开启客户端线程
         clientThread = new ClientThread(device, handler, this);
         clientThread.start();
@@ -188,7 +189,21 @@ public class AtyClient extends Activity {
                     long fileLength = randomFile.length();
                     // 将写文件指针移到文件尾。
                     randomFile.seek(fileLength);
-                    randomFile.write(AtyClient.chooseMenu[ClientThread.n].getBytes());
+
+                    switch (ClientThread.anInt){
+                        case 0:
+                            randomFile.write("*Left variant tract".getBytes());
+                            break;
+                        case 1:
+                            randomFile.write("*Right variant tract".getBytes());
+                            break;
+                        case 2:
+                            randomFile.write("*Left turn".getBytes());
+                            break;
+                        case 3:
+                            randomFile.write("*Right turn".getBytes());
+                            break;
+                    }
                     randomFile.close();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -200,8 +215,8 @@ public class AtyClient extends Activity {
             public void onClick(DialogInterface dialog, int which) {
                 String str = chooseMenu[which];
                 Toast.makeText(context, str + "被点击了", Toast.LENGTH_SHORT).show();
-                ClientThread.n=which;
-                Log.i("test","文件名Aty"+ClientThread.n);
+                ClientThread.anInt =which;
+                Log.i("test","文件名Aty"+ClientThread.anInt);
             }
         });
 
@@ -248,7 +263,7 @@ public class AtyClient extends Activity {
             switch (msg.what) {
                 case Config.STATUES_CONNECT_SUCCESS:
                     //  btnSend.setEnabled(true);
-                    // tvContent.append(CurentTimeString.getTime() + "->>" + "连接成功\n");
+                    // tvContent.append(CurentTimeString.getTime() + "->>" + "连接成功\anInt");
                     isConnected = true;
                     btnToggle.setEnabled(true);
                     isWritingGPS = false;
@@ -256,24 +271,24 @@ public class AtyClient extends Activity {
                     break;
                 case Config.STATUES_CONNECT_FAILED:
                     //  btnSend.setEnabled(false);
-                    //   tvContent.append(CurentTimeString.getTime() + "->>" + "连接失败\n");
+                    //   tvContent.append(CurentTimeString.getTime() + "->>" + "连接失败\anInt");
                     break;
                 case Config.STATUES_READ_FAILED:
-                    //  tvContent.append(CurentTimeString.getTime() + "->>" + "读取失败\n");
+                    //  tvContent.append(CurentTimeString.getTime() + "->>" + "读取失败\anInt");
                     break;
                 case Config.STATUES_READ_SUCCESS:
-                    // tvContent.append(CurentTimeString.getTime() + "->>接收：" + msg.obj.toString() + "\n");
+                    // tvContent.append(CurentTimeString.getTime() + "->>接收：" + msg.obj.toString() + "\anInt");
                     //                    System.out.println(msg.obj.toString());
                     //开始绘图
                     drawPicture(msg.obj.toString());
 
                     break;
                 case Config.STATUES_WRITE_FAILED:
-                    //  tvContent.append(CurentTimeString.getTime() + "->>" + "写入\n");
+                    //  tvContent.append(CurentTimeString.getTime() + "->>" + "写入\anInt");
                     break;
                 case Config.STATUES_WRITE_SUCCESS:
                     //   tvContent.append(CurentTimeString.getTime() + "->>发送："+msg.obj.toString() +
-                    //           "    ---->>>>发送成功\n");
+                    //           "    ---->>>>发送成功\anInt");
                     break;
                 case Config.STATUES_RECOGNIZE_SUCCESS:
                     Toast.makeText(AtyClient.this, msg.obj+"", Toast.LENGTH_LONG).show();
@@ -476,6 +491,7 @@ public class AtyClient extends Activity {
     @Override
     protected void onDestroy() {
         clientThread.cancel();
+        clientThread.interrupt();
         super.onDestroy();
     }
 }

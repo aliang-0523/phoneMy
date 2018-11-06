@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,9 +38,9 @@ public class ClientThread extends Thread {
     private BluetoothSocket socket;
     private boolean isStopReading;
     private Context mContext;
-    public static int n;
+    public static int anInt;
 
-    private List<MyData> mCurrentMyData;
+    private List<MyData> mCurrentMyData=new ArrayList<>();
 
     public static class MyData {
         float x;
@@ -78,6 +79,7 @@ public class ClientThread extends Thread {
     public int getNumber() {
         return number;
     }
+
 
     @Override
     public void run() {
@@ -146,10 +148,30 @@ public class ClientThread extends Thread {
     }
 
     //数据能量数组
-    List<Double> EnergyArr;
-//    List<Double> EnergyArr = new ArrayList<>();
+    List<Double> EnergyArr=new ArrayList<>();
+    //List<Double> EnergyArr = new ArrayList<>();
     //数据实部数组
-    List<Double> shibuchaArr;
+    List<Double> shibuchaArr=new ArrayList<>();
+    List<Double> E2array=new ArrayList<>();
+    List<Double> Earray=new ArrayList<>();
+    List<Double> Amp2array=new ArrayList<>();
+    List<Double> timesArray=new ArrayList<>();
+    List<Double> costArray=new ArrayList<>();
+    List<Double> costArray2=new ArrayList<>();
+
+    double[] timesarray={0.8,1.33,2.42,1.19};
+    double[] timesarrayEvery={1,2,2,1};
+    double[] timesarrayEvery2={4,3,2,1};
+    boolean[] boolArray={true,true,true,true};
+    int SWturned = 0;
+    int predetect = 0;
+    int alarming=0;
+    int swturned=0;
+    int tempBool=0;
+    int tempNum=0;
+    int In=0;
+    int Sureturn=0;
+    int swturn2=0;
 //    List<Double> shibuchaArr = new ArrayList<>();
     long timeStart;
     long timeEnd;
@@ -174,79 +196,88 @@ public class ClientThread extends Thread {
 //            }
 
 
-        double s = - ((speed *3.6 + 37.49) / 47.92) * ((speed *3.6 + 37.49) / 47.92);
+        double s = - 0.021*speed*3.6;
+        double s2=-0.09*speed*3.6;
         double e1 = Math.E;
         double s1 =  Math.pow(e1, s);
-        Energy =  8.79 * s1 + 0.0321;
-        //  Log.e("能量阈值:", "能量阈值" + Energy);
-
+        double s12=Math.pow(e1,s2);
+        Energy =  0.25 * s1 + 1.2*s12;
             int leftOrRight = -1;//0左 1右  -1无变道
 
             if (list != null && list.size() == 35) {
 
 
-                            timeStart = CurentTimeString.getTime1();   //开始检测时间
+                timeStart = CurentTimeString.getTime1();   //开始检测时间
                                 //Log.e("timeStart", "检测时间开始(毫秒):" + timeStart);
 
-                            Complex[] queue = new Complex[35];
+                Complex[] queue = new Complex[35];
                                //Log.e("calculate", "mFristData:" + mFristData);
                                //将原始数据平移到x轴 零点为起点 即第一个y减去他本身变为0 后面每一个数也减去第一个y
-                            for (int i = 0; i < list.size(); i++) {
-                                queue[i] = new Complex(list.get(i).y, 0).minus(mFristData);
-                                queue[i] = queue[i].divides(new Complex(100, 0));
+                for (int i = 0; i < list.size(); i++) {
+                    queue[i] = new Complex(list.get(i).y, 0).minus(mFristData);
+                    queue[i] = queue[i].divides(new Complex(100, 0));
                                 //Log.e("calculate", "queue[i]:" + queue[i].re());
-                            }
+                }
 
 
-                            //傅里叶转换 得到的是一个复数数组 此时进行的是复数的操作
-                            double fs2 = 5; //自己设置采样频率
+                //傅里叶转换 得到的是一个复数数组 此时进行的是复数的操作
+                double fs2 = 5; //自己设置采样频率
 
-                            int NFFT2 = 64;//转化为2的基数倍 DFT需要的采样点数为2的幂指数
-
-                            double[] F_domain2 = new double[32];
-
-                            for (int i = 0; i < NFFT2 / 2; i++) {
-                                F_domain2[i] = (fs2 / 2) * 1.0 / (NFFT2 / 2 - 1) * i;
-                            }
+                int NFFT2 = 128;//转化为2的基数倍 DFT需要的采样点数为2的幂指数
+                double[] F_domain2 = new double[64];
+                for (int i = 0; i < NFFT2 / 2; i++) {
+                    F_domain2[i] = (fs2 / 2) * 1.0 / (NFFT2 / 2 - 1) * i;
+                    }
                 //--------------------------------------------------------------------------------------------------------
                             // FFT变换 将时域上的原始数据queue转化到频域上 Y2为复数 a+b*i
-                            Complex[] Y2 = FFT.fft(queue, 0, NFFT2);
-                            //原始幅值
-                            Complex[] Amp = new Complex[32];
-                            for (int i = 0; i < 32; i++) {
-                                Y2[i] = Y2[i].divides(new Complex(list.size(), 0));
-                                // 幅值
-                                Amp[i] = Y2[i].times(new Complex(2, 0));
-                               //  Log.e("calculate", "Amp2:" + Amp2[i].re() + " , " + Amp2[i].im());
-                            }
-                            // 判别变道的方向   频域上起始位置的实部减去第二个点的实部
-                            // 如果大于0是左变道 反之右变道
-                            double shibu1 = Amp[1].re();
-                            double shibu0 = Amp[0].re();
-                            double shibucha = shibu0 - shibu1;
+                Complex[] Y2 = FFT.fft(queue, 0, NFFT2);
+                //原始幅值
+                Complex[] Amp = new Complex[64];
+                for (int i = 0; i < 64; i++) {
+                    Y2[i] = Y2[i].divides(new Complex(list.size(), 0));
+                    // 幅值
+                    Amp[i] = Y2[i].times(new Complex(2, 0));
+                    //  Log.e("calculate", "Amp2:" + Amp2[i].re() + " , " + Amp2[i].im());
+                }
+                // 判别变道的方向   频域上起始位置的实部减去第二个点的实部
+                // 如果大于0是左变道 反之右变道
+                double shibu1 = Amp[1].re();
+                double shibu0 = Amp[0].re();
+                double shibucha = shibu0 - shibu1;
                 //--------------------------------------------------------------------------------------------------------
                             //原始幅值取绝对值
-                            double[] Amp2 = new double[32];
-                            for(int i = 0 ; i < 32; i++){
-                                Amp2[i] = Amp[i].abs();
-                            }
-                            // cha 用于区别变道和其他非变道行为
-                            // 当能量值超过阈值时，再计算cha，如果cha<0则为变道，反之不为变道(弯道 转弯)
-                            double  m = Amp2[0];
-                            double  n = (Amp2[2] + Amp2[3] + Amp2[4])/3;
-                            double  cha = m - n;
-                            //求能量
-                            double E2 = 0;
-                            for (int j = 2; j < 5; j++){
-                                E2 = E2 + Amp2[j] * Amp2[j];
-                            }
+                double[] Amp2 = new double[64];
+                for(int i = 0 ; i < 64; i++){
+                    Amp2[i] = Amp[i].abs()/128;
+                    }
+                    // cha 用于区别变道和其他非变道行为
+                // 当能量值超过阈值时，再计算cha，如果cha<0则为变道，反之不为变道(弯道 转弯)
+                double  m = Amp2[0];
+                double  n = (Amp2[2] + Amp2[3] + Amp2[4])/3;
+                double  cha = m - n;
+                //求能量
+                Earray.add(Energy);
+                double E2 = 0;
+                List<Double> EnergyArray1=new ArrayList<>();
+                int c=(int) Math.rint(5/(-0.0001542*speed*3.6*speed*3.6-0.1267*speed*3.6+38.12)/0.04);
+                for (int j=c;j<c+3 ; j++){
+                    //E2 = E2 + Amp2[j] * Amp2[j];
+                    EnergyArray1.add(Amp2[j-1]);
+                }
 
+                E2= Collections.max(EnergyArray1);
+                E2array.add(E2);
+                Amp2array.add(Amp2[0]);
+                double times=(Amp2[0]-E2)/E2;
+                costArray.add(Amp2[0]-E2);
+                costArray2.add(E2-Energy);
+                timesArray.add(times);
 //                            Log.e("Energy", "E2:" + E2);
 
                 //--------------------------------------------------------------------------------------------------------
                 // 方法1： 能量值第一次大于阈值时 即进行变道判断并播报（不会延迟2s播报）
 //                                if (E2 >= Energy && EnergyArr.size() == 0) {
-//                                    if(cha < 0.9*n){
+//                                    if(cha < 0.9*anInt){
 //                                        if (shibucha > 0) {
 //                                            leftOrRight = 0; //左变道
 //                                        } else {
@@ -272,44 +303,72 @@ public class ClientThread extends Thread {
 
                 //--------------------------------------------------------------------------------------------------------
                 //  方法2：能量值第一次大于阈值时先不进行播报 判断第二次时再播报是否变道（延迟2s：每次截取10条数据，每1s钟传5条数据）
-                           if (Amp2[0] > 6){
-                                SWturned = 1;     //进入弯道或转弯的标志位
-                           }
+                if (Amp2[0] > 1.41){
+                    SWturned = 1;     //进入弯道或转弯的标志位
+                }
 
-                           if(E2>=Energy && EnergyArr.size() == 0 ){
-                               EnergyArr.add(E2);
-                               if ( cha < 0.9*n &&  SWturned == 0){  //%一旦满足 就进入下一个elseif 即判为变道
-                                   predetect = 1;  //进入变道的标志位
-                               }else if(cha >= 0.9*n){   //进入转弯或弯道的标志位，一旦进入就不会执行下一个elseif 即为非变道
-                                   SWturned = 1;
-                               }
+                if(E2>=Energy && EnergyArr.size() == 0 &&alarming==0){
+                    EnergyArr.add(E2);
+                    if ( times < timesarray[0]&&  SWturned == 0&&In==0){  //%一旦满足 就进入下一个elseif 即判为变道
+                        predetect = 1;  //进入变道的标志位
+                        double tempNum=timesArray.size()-1;
+                        In=1;
+                    }else if(times >= timesarray[0]){   //进入转弯或弯道的标志位，一旦进入就不会执行下一个elseif 即为非变道
+                        SWturned = 1;
+                        }
+                }
+                if(EnergyArr.size()==1&&predetect==1&&SWturned==0&&times<timesarray[0]&&tempBool==0){
+                    tempBool=1;
+                    swturned=1;
+                }
+                else if( timesArray.size() >=(tempNum+1)&& swturned==1&&In==1 ){
+                    int tempA=tempNum;
+                    while(tempA<timesArray.size()&&(tempA-tempNum)<3){
+                        if(!boolArray[tempA+1-tempNum]){
+                            if(costArray.get(tempA+1)<costArray.get(tempA)){
+                                Sureturn=1;
+                            }
+                            if(tempA+1-tempNum==1&&timesArray.get(tempA+1)<-0.5){
+                                Sureturn=1;
+                            }
+                        }
+                        else if(boolArray[tempA+1-tempNum]){
+                            if(timesArray.get(tempA+1)>timesarrayEvery[tempA+1-tempNum]){
+                                swturn2=1;
+                            }
+                            if(costArray.get(tempA+1)<costArray.get(tempA)){
+                                Sureturn=1;
+                            }
+                            if(tempA+1-tempNum==1&&timesArray.get(tempA+1)<-0.5){
+                                Sureturn=1;
+                            }
+                        }
+                        tempA=tempA+1;
+                    }
 
-                           }
+                }
 
-                           else if( EnergyArr.size() == 1 &&  predetect == 1 && SWturned ==0 ){
-                               if(shibucha >= 0){
-                                   EnergyArr.add(E2);
-                                   leftOrRight = 0; //左变道
-                               }else{
-                                   EnergyArr.add(E2);
-                                   leftOrRight = 1; //右变道
-                               }
-
-                           }
-
-                           else{
-                               predetect  = 0;
-                               EnergyArr.clear();
-                           }
-
-
-                           if(E2 < Energy){
-                               SWturned = 0;
-                           }
-
-
-
-
+                if(Sureturn==1&&swturn2==0){
+                    In=0;
+                    swturned=0;
+                    Sureturn=0;
+                    alarming=1;
+                    if(shibucha >= 0){
+                        EnergyArr.add(E2);
+                        leftOrRight = 0; //左变道
+                    }else{
+                        EnergyArr.add(E2);
+                        leftOrRight = 1; //右变道
+                    }
+                }
+                else{
+                    predetect  = 0;
+                    EnergyArr.clear();
+                    }
+                    if(E2 < Energy){
+                    alarming=0;
+                    SWturned = 0;
+                }
                 //            if (E2 >= Energy && EnergyArr.size() == 0) {
                 //                EnergyArr.add(E2);
                 //                shibuchaArr.add(shibucha);
@@ -355,48 +414,35 @@ public class ClientThread extends Thread {
                 //            }
 
                 //--------------------------------------------------------------------------------------------------------
-
              }
+            else if(list != null && list.size() == 35&&speed>16) {  //高速的情况
+                timeStart = CurentTimeString.getTime1();   //开始检测时间
+                //Log.e("timeStart", "检测时间开始(毫秒):" + timeStart);
 
-            else if(list != null && list.size() == 30) {  //高速的情况
-                timeStart = CurentTimeString.getTime1();
-                //            Log.e("timeStart", "检测时间开始(毫秒):" + timeStart);
-
-                Complex[] queue = new Complex[30];
-
-                //            Log.e("calculate", "mFristData:" + mFristData);
-                //将原始数据平移到x轴 即第一个y减去他本身变为0 后面每一个数也减去第一个y
+                Complex[] queue = new Complex[35];
+                //Log.e("calculate", "mFristData:" + mFristData);
+                //将原始数据平移到x轴 零点为起点 即第一个y减去他本身变为0 后面每一个数也减去第一个y
                 for (int i = 0; i < list.size(); i++) {
                     queue[i] = new Complex(list.get(i).y, 0).minus(mFristData);
                     queue[i] = queue[i].divides(new Complex(100, 0));
-
+                    //Log.e("calculate", "queue[i]:" + queue[i].re());
                 }
 
-                //            Log.e("calculate", "mCurrentMyData:" + mCurrentMyData.get(0).y + " , " + mCurrentMyData.get(39).y);
 
                 //傅里叶转换 得到的是一个复数数组 此时进行的是复数的操作
                 double fs2 = 5; //自己设置采样频率
 
-                int NFFT2 = 32;//转化为2的基数倍 DFT需要的采样点数为2的幂指数
-
-                double[] F_domain2 = new double[16];
+                int NFFT2 = 128;//转化为2的基数倍 DFT需要的采样点数为2的幂指数
+                double[] F_domain2 = new double[64];
                 for (int i = 0; i < NFFT2 / 2; i++) {
                     F_domain2[i] = (fs2 / 2) * 1.0 / (NFFT2 / 2 - 1) * i;
                 }
-                // FFT变换
+                //--------------------------------------------------------------------------------------------------------
+                // FFT变换 将时域上的原始数据queue转化到频域上 Y2为复数 a+b*i
                 Complex[] Y2 = FFT.fft(queue, 0, NFFT2);
-
-//                Complex[] Amp2 = new Complex[16];
-//                for (int i = 0; i < 16; i++) {
-//                    Y2[i] = Y2[i].divides(new Complex(list.size(), 0));
-//                    // 幅值
-//                    Amp2[i] = Y2[i].times(new Complex(2, 0));
-//
-//                    //                Log.e("calculate", "Amp2:" + Amp2[i].re() + " , " + Amp2[i].im());
-//                }
-
-                Complex[] Amp = new Complex[16];
-                for (int i = 0; i < 16; i++) {
+                //原始幅值
+                Complex[] Amp = new Complex[64];
+                for (int i = 0; i < 64; i++) {
                     Y2[i] = Y2[i].divides(new Complex(list.size(), 0));
                     // 幅值
                     Amp[i] = Y2[i].times(new Complex(2, 0));
@@ -409,87 +455,127 @@ public class ClientThread extends Thread {
                 double shibucha = shibu0 - shibu1;
                 //--------------------------------------------------------------------------------------------------------
                 //原始幅值取绝对值
-                double[] Amp2 = new double[16];
-                for(int i = 0 ; i < 16; i++){
-                    Amp2[i] = Amp[i].abs();
+                double[] Amp2 = new double[64];
+                for (int i = 0; i < 64; i++) {
+                    Amp2[i] = Amp[i].abs() / 128;
                 }
                 // cha 用于区别变道和其他非变道行为
                 // 当能量值超过阈值时，再计算cha，如果cha<0则为变道，反之不为变道(弯道 转弯)
-                double  m = Amp2[0];
-                double  n = (Amp2[1] + Amp2[2] + Amp2[3])/3;
-                double  cha = m - n;
-
-
-                //求原始变道数据的能量
+                double m = Amp2[0];
+                double n = (Amp2[2] + Amp2[3] + Amp2[4]) / 3;
+                double cha = m - n;
+                //求能量
+                Earray.add(Energy);
                 double E2 = 0;
-                for (int i = 1; i < 4; i++) {
-                    E2 = E2 + Amp2[i] * Amp2[i];
+                List<Double> EnergyArray1 = new ArrayList<>();
+                int c = (int) Math.rint(5 / (-0.0001542 * speed * 3.6 * speed * 3.6 - 0.1267 * speed * 3.6 + 38.12) / 0.04);
+                for (int j = c; j < c + 3; j++) {
+                    //E2 = E2 + Amp2[j] * Amp2[j];
+                    EnergyArray1.add(Amp2[j - 1]);
                 }
-                Log.e("Energy30", "E2:" + E2);
 
+                E2 = Collections.max(EnergyArray1);
+                E2array.add(E2);
+                Amp2array.add(Amp2[0]);
+                double times = (Amp2[0] - E2) / E2;
+                costArray.add(Amp2[0] - E2);
+                costArray2.add(E2 - Energy);
+                timesArray.add(times);
+//                            Log.e("Energy", "E2:" + E2);
 
-                //**********************************************************************************
+                //--------------------------------------------------------------------------------------------------------
                 // 方法1： 能量值第一次大于阈值时 即进行变道判断并播报（不会延迟2s播报）
-//                if (E2 >= Energy && EnergyArr.size() == 0  && cha < 2 * n) {
-//                    if (shibucha > 0) {
-//                        leftOrRight = 0; //左变道
-//                    } else {
-//                        leftOrRight = 1;  //右变道
-//                    }
-//                    EnergyArr.add(E2);
-//                }
+//                                if (E2 >= Energy && EnergyArr.size() == 0) {
+//                                    if(cha < 0.9*anInt){
+//                                        if (shibucha > 0) {
+//                                            leftOrRight = 0; //左变道
+//                                        } else {
+//                                            leftOrRight = 1;  //右变道
+//                                        }
+//                                    }
 //
-//                //中间大于能量阈值的 不进行任何操作  直到小于能量阈值 清空EnergyArr 重新开始新的检测
-//                else if (E2 < Energy && EnergyArr.size() == 1) {
-//                    EnergyArr.clear();
-//                }
+//                                    EnergyArr.add(E2);
 //
-//                else{
+//                                }
 //
-//                }
-                //**********************************************************************************
+//                                //中间大于能量阈值的 不进行任何操作  直到小于能量阈值 清空EnergyArr 重新开始新的检测
+//                                else if (E2 < Energy && EnergyArr.size() == 1) {
+//                                    EnergyArr.clear();
+//                                }
+//
+//
+//                                else{
+//
+//                                }
+                //--------------------------------------------------------------------------------------------------------
 
 
-                //**********************************************************************************
+                //--------------------------------------------------------------------------------------------------------
                 //  方法2：能量值第一次大于阈值时先不进行播报 判断第二次时再播报是否变道（延迟2s：每次截取10条数据，每1s钟传5条数据）
-                         //能量大于阈值 且是第一个 存入能量数组
-                         //cha<3*n 用于区分变道和非变道
-                         //进入变道或弯道的第一次检测   或出弯道的第一次检测
-                        if( E2>=Energy && EnergyArr.size() == 0 && cha < 2.93*n ) {
-                            EnergyArr.add(E2);
+                if (Amp2[0] > 1.41) {
+                    SWturned = 1;     //进入弯道或转弯的标志位
+                }
+
+                if (E2 >= Energy && EnergyArr.size() == 0 && alarming == 0) {
+                    EnergyArr.add(E2);
+                    if (times < timesarray[0] && SWturned == 0 && In == 0) {  //%一旦满足 就进入下一个elseif 即判为变道
+                        predetect = 1;  //进入变道的标志位
+                        double tempNum = timesArray.size() - 1;
+                        In = 1;
+                    } else if (times >= timesarray[0]) {   //进入转弯或弯道的标志位，一旦进入就不会执行下一个elseif 即为非变道
+                        SWturned = 1;
+                    }
+                }
+                if (EnergyArr.size() == 1 && predetect == 1 && SWturned == 0 && times < timesarray[0] && tempBool == 0) {
+                    tempBool = 1;
+                    swturned = 1;
+                } else if (timesArray.size() >= (tempNum + 1) && swturned == 1 && In == 1) {
+                    int tempA = tempNum;
+                    while (tempA < timesArray.size() && (tempA - tempNum) < 3) {
+                        if (!boolArray[tempA + 1 - tempNum]) {
+                            if (costArray.get(tempA + 1) < costArray.get(tempA)) {
+                                Sureturn = 1;
+                            }
+                            if (tempA + 1 - tempNum == 1 && timesArray.get(tempA + 1) < -0.5) {
+                                Sureturn = 1;
+                            }
+                        } else if (boolArray[tempA + 1 - tempNum]) {
+                            if (timesArray.get(tempA + 1) > timesarrayEvery2[tempA + 1 - tempNum]) {
+                                swturn2 = 1;
+                            }
+                            if (costArray.get(tempA + 1) < costArray.get(tempA)) {
+                                Sureturn = 1;
+                            }
+                            if (tempA + 1 - tempNum == 1 && timesArray.get(tempA + 1) < -0.5) {
+                                Sureturn = 1;
+                            }
                         }
+                        tempA = tempA + 1;
+                    }
 
-                        //进入变道或弯道后的第二次检测 如果cha值满足条件则为变道 反之则为转弯或弯道
-                        else if(EnergyArr.size() == 1 &&  cha <2.93*n ){
-                           if( shibucha >=0 ) {
-                               EnergyArr.add(E2);
-                               leftOrRight = 0; //左变道
-                           }else{
-                               EnergyArr.add(E2);
-                               leftOrRight = 1; //右变道
-                           }
-                        }
+                }
 
-                       //进入弯道后的检测（之后手腕不动的部分）不做处理
-                        else if(EnergyArr.size() == 1  && cha >= 2.93*n ){
-                                EnergyArr.clear();
-                                shibuchaArr.clear();
-                        }
-
-
-                        // 变道结束后
-                        else if (EnergyArr.size() == 2  &&  cha >= 2.93*n ){
-                            EnergyArr.clear();
-                            shibuchaArr.clear();
-                        }
-
-                        else{
-
-                        }
-                //**********************************************************************************
-
+                if (Sureturn == 1 && swturn2 == 0) {
+                    In = 0;
+                    swturned = 0;
+                    Sureturn = 0;
+                    alarming = 1;
+                    if (shibucha >= 0) {
+                        EnergyArr.add(E2);
+                        leftOrRight = 0; //左变道
+                    } else {
+                        EnergyArr.add(E2);
+                        leftOrRight = 1; //右变道
+                    }
+                } else {
+                    predetect = 0;
+                    EnergyArr.clear();
+                }
+                if (E2 < Energy) {
+                    alarming = 0;
+                    SWturned = 0;
+                }
             }
-
             else{
 
 
@@ -517,18 +603,11 @@ public class ClientThread extends Thread {
         this.speedTempVar = temp;
     }
 
-    private static boolean isWrite;
-
-    public static void setIsWrite(boolean isWrite) {
-        ClientThread.isWrite = isWrite;
-    }
 
     public boolean PAUSE_WRITE = true;
 
     private Complex mFristData;
 
-    int SWturned = 0;
-    int predetect = 0;
     //将原始数据存入手机根目录中
     private void writeToFile(String a) throws IOException {
 
@@ -623,7 +702,7 @@ public class ClientThread extends Thread {
         else{
 
         }
-        Log.i("test","文件名Client"+n);
+        Log.i("test","文件名Client"+ anInt);
         filename = new File(Environment.getExternalStorageDirectory(), "/sensor/" +number + ".txt");
         filename1 = new File(Environment.getExternalStorageDirectory(), "/sensor/陀螺仪" +number + ".txt");
         filename2 = new File(Environment.getExternalStorageDirectory(), "/sensor/线性加速度" +number + ".txt");
@@ -707,8 +786,8 @@ public class ClientThread extends Thread {
             long fileLength = randomFile.length();
             // 将写文件指针移到文件尾。
             randomFile.seek(fileLength);
-//            randomFile.writeBytes(content + "\r\n");
-//            randomFile.writeChars(content + "\r\n");
+//            randomFile.writeBytes(content + "\r\anInt");
+//            randomFile.writeChars(content + "\r\anInt");
             randomFile.writeUTF(content + "\r\n");
             randomFile.close();
         } catch (IOException e) {
@@ -732,24 +811,7 @@ public class ClientThread extends Thread {
             e.printStackTrace();
         }
     }
-  /*  public void write(String str) {
-        if (socket != null) {
-            Message msg = new Message();
-            try {
-                if (out == null)
-                    out = socket.getOutputStream();
-                byte[] bytes = str.getBytes();
-                out.write(bytes, 0, bytes.length);
-                out.flush();
-                msg.what = Config.STATUES_WRITE_SUCCESS;
-                msg.obj = str;
-                handler.sendMessage(msg);
-            } catch (IOException e) {
-                e.printStackTrace();
-                handler.sendEmptyMessage(Config.STATUES_WRITE_FAILED);
-            }
-        } else handler.sendEmptyMessage(Config.STATUES_WRITE_FAILED);
-    }*/
+
 
     public void cancel() {
         isStopReading = true;

@@ -49,12 +49,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         initView();
-
         initEvent();
-
-
+        IntentFilter intentFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(receiver, intentFilter);
     }
 
     public void initView (){
@@ -71,10 +69,7 @@ public class MainActivity extends AppCompatActivity {
             listAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
             //设备列表数据
             deviceList = new ArrayList<>();
-
-            if(listAdapter!=null) {
-                listView.setAdapter(listAdapter);
-            }
+            listView.setAdapter(listAdapter);
             timeEnd = CurentTimeString.getTime1();
             Log.e("hah", "time:" + (timeEnd - timeStart));
 //        Toast.makeText(this, "左变道"+"  检测时长：" + (timeEnd- timeStart )+"毫秒", Toast.LENGTH_LONG).show();
@@ -132,8 +127,7 @@ public class MainActivity extends AppCompatActivity {
             bluetoothAdapter.startDiscovery();//开启被发现
             //found device
             ////定义了BroadcastReceiver对象receiver,就可以来使用它来监听蓝牙查找情况
-            IntentFilter intentFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(receiver, intentFilter);
+
         }
         catch (RuntimeException e){
             Log.i("myerror","程序意外崩溃");
@@ -145,21 +139,32 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        unregisterReceiver(receiver);
+
         super.onStop();
     }
 
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(receiver);
+        super.onDestroy();
+    }
 
     private BroadcastReceiver receiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            try{
+            try {
                 if (intent.getAction() == BluetoothDevice.ACTION_FOUND) {
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    deviceList.add(device);
-                    if(device.getName()!=null) {
-                        listAdapter.add(device.getName());
+                    if (!deviceList.contains(device)) {
+                        deviceList.add(device);
+                        Log.i("haha", device.toString());
+                        if(device.getName()==null) {
+                            listAdapter.add("123");
+                        }
+                        else {
+                            listAdapter.add(device.getName());
+                        }
                     }
                 } else if (intent.getAction() == BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
                     Toast.makeText(MainActivity.this, "搜索完成", Toast.LENGTH_SHORT).show();
@@ -169,5 +174,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
 
 }
