@@ -149,9 +149,6 @@ public class ClientThread extends Thread {
 
     //数据能量数组
     List<Double> EnergyArr=new ArrayList<>();
-    //List<Double> EnergyArr = new ArrayList<>();
-    //数据实部数组
-    List<Double> shibuchaArr=new ArrayList<>();
     List<Double> E2array=new ArrayList<>();
     List<Double> Earray=new ArrayList<>();
     List<Double> Amp2array=new ArrayList<>();
@@ -494,10 +491,6 @@ public class ClientThread extends Thread {
 
         if(EnergyArr == null){
             EnergyArr = new ArrayList<>();
-        }
-
-        if(shibuchaArr == null){
-            shibuchaArr = new ArrayList<>();
         }
 
 
