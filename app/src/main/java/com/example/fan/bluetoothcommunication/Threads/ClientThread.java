@@ -129,10 +129,10 @@ public class ClientThread extends Thread {
                     handler.sendMessage(msg);
 
                     //当手机的GPS数据的speed不为0  再追加到传感器数据后面 并写入文件
-//                      if(speedTempVar!=0){
+                     //if(speedTempVar!=0){
                         line+=" "+speedTempVar;
                         writeToFile(line);
-//                      }
+                      //}
 
 
                 }

@@ -180,7 +180,7 @@ public class AtyClient extends Activity {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 cancel=false;
-                clientThread.PAUSE_WRITE = true;
+                clientThread.PAUSE_WRITE = false;
                 isWritingGPS = false;
                 try {
                     // 打开一个随机访问文件流，按读写方式
@@ -267,7 +267,7 @@ public class AtyClient extends Activity {
                     isConnected = true;
                     btnToggle.setEnabled(true);
                     isWritingGPS = false;
-                  startGPS();
+                    startGPS();
                     break;
                 case Config.STATUES_CONNECT_FAILED:
                     //  btnSend.setEnabled(false);
