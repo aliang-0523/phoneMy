@@ -159,7 +159,7 @@ public class ClientThread extends Thread {
     double[] timesarray={0.8,1.33,2.42,1.19};
     double[] timesarrayEvery={1,2,2,1};
     double[] timesarrayEvery2={4,3,2,1};
-    boolean[] boolArray={true,true,true,true};
+    boolean[] boolArray={true,true,false,false};
     int SWturned = 0;
     int predetect = 0;
     int alarming=0;
@@ -231,7 +231,7 @@ public class ClientThread extends Thread {
                 //原始幅值
                 Complex[] Amp = new Complex[64];
                 for (int i = 0; i < 64; i++) {
-                    Y2[i] = Y2[i].divides(new Complex(list.size(), 0));
+                    Y2[i] = Y2[i].divides(new Complex(128, 0));
                     // 幅值
                     Amp[i] = Y2[i].times(new Complex(2, 0));
                     //  Log.e("calculate", "Amp2:" + Amp2[i].re() + " , " + Amp2[i].im());
@@ -245,13 +245,9 @@ public class ClientThread extends Thread {
                             //原始幅值取绝对值
                 double[] Amp2 = new double[64];
                 for(int i = 0 ; i < 64; i++){
-                    Amp2[i] = Amp[i].abs()/128;
+                    Amp2[i] = Amp[i].abs();
                     }
                     // cha 用于区别变道和其他非变道行为
-                // 当能量值超过阈值时，再计算cha，如果cha<0则为变道，反之不为变道(弯道 转弯)
-                double  m = Amp2[0];
-                double  n = (Amp2[2] + Amp2[3] + Amp2[4])/3;
-                double  cha = m - n;
                 //求能量
                 Earray.add(Energy);
                 double E2 = 0;
@@ -308,7 +304,7 @@ public class ClientThread extends Thread {
                     EnergyArr.add(E2);
                     if ( times < timesarray[0]&&  SWturned == 0&&In==0){  //%一旦满足 就进入下一个elseif 即判为变道
                         predetect = 1;  //进入变道的标志位
-                        double tempNum=timesArray.size()-1;
+                        tempNum=timesArray.size()-1;
                         In=1;
                     }else if(times >= timesarray[0]){   //进入转弯或弯道的标志位，一旦进入就不会执行下一个elseif 即为非变道
                         SWturned = 1;
@@ -325,7 +321,7 @@ public class ClientThread extends Thread {
                             if(costArray.get(tempA+1)<costArray.get(tempA)){
                                 Sureturn=1;
                             }
-                            if(tempA+1-tempNum==1&&timesArray.get(tempA+1)<-0.5){
+                            if(tempA+1-tempNum==1&&timesArray.get(tempA+1)<diff){
                                 Sureturn=1;
                             }
                         }
