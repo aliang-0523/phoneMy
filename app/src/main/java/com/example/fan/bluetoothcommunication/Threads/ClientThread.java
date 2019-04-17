@@ -33,7 +33,6 @@ public class ClientThread extends Thread {
 
     private Handler handler;
     private InputStream in;
-    private OutputStream out;
     private BluetoothDevice device;
     private BluetoothSocket socket;
     private boolean isStopReading;
@@ -73,10 +72,6 @@ public class ClientThread extends Thread {
         SharedPreferences.Editor editor = sp.edit();
         editor.putInt("number", number + 1);
         editor.commit();
-        return number;
-    }
-
-    public int getNumber() {
         return number;
     }
 
@@ -148,13 +143,13 @@ public class ClientThread extends Thread {
     }
 
     //数据能量数组
-    List<Double> EnergyArr=new ArrayList<>();
-    List<Double> E2array=new ArrayList<>();
-    List<Double> Earray=new ArrayList<>();
-    List<Double> Amp2array=new ArrayList<>();
-    List<Double> timesArray=new ArrayList<>();
-    List<Double> costArray=new ArrayList<>();
-    List<Double> costArray2=new ArrayList<>();
+    public List<Double> EnergyArr=new ArrayList<>();
+    public List<Double> E2array=new ArrayList<>();
+    public List<Double> Earray=new ArrayList<>();
+    public List<Double> Amp2array=new ArrayList<>();
+    public List<Double> timesArray=new ArrayList<>();
+    public List<Double> costArray=new ArrayList<>();
+    public List<Double> costArray2=new ArrayList<>();
 
     double[] timesarray={0.8,1.33,2.42,1.19};
     double[] timesarrayEvery={1,2,2,1};
@@ -314,10 +309,10 @@ public class ClientThread extends Thread {
                     tempBool=1;
                     swturned=1;
                 }
-                else if( timesArray.size() >=(tempNum+1)&& swturned==1&&In==1 ){
+                else if( timesArray.size() >=(tempNum+2)&& swturned==1&&In==1 ){
                     int tempA=tempNum;
-                    while(tempA<timesArray.size()&&(tempA-tempNum)<3){
-                        if(!boolArray[tempA+1-tempNum]){
+                    while(tempA<timesArray.size()-1&&(tempA-tempNum)<3){
+                        if(!boolArray[tempA-tempNum]){
                             if(costArray.get(tempA+1)<costArray.get(tempA)){
                                 Sureturn=1;
                             }
@@ -325,8 +320,8 @@ public class ClientThread extends Thread {
                                 Sureturn=1;
                             }
                         }
-                        else if(boolArray[tempA+1-tempNum]){
-                            if(timesArray.get(tempA+1)>ta[tempA+1-tempNum]){
+                        else if(boolArray[tempA-tempNum]){
+                            if(timesArray.get(tempA+1)>ta[tempA-tempNum]){
                                 swturn2=1;
                             }
                             if(costArray.get(tempA+1)<costArray.get(tempA)){
@@ -357,6 +352,13 @@ public class ClientThread extends Thread {
                 else{
                     predetect  = 0;
                     EnergyArr.clear();
+                    E2array.clear();
+                    Earray.clear();
+                    Amp2array.clear();
+                    timesArray.clear();
+                    costArray.clear();
+                    costArray2.clear();
+                    EnergyArray1.clear();
                     }
                     if(E2 < Energy){
                     alarming=0;
@@ -424,6 +426,9 @@ public class ClientThread extends Thread {
     }
 
 
+    public int getSpeedTempVar(){
+        return speedTempVar;
+    }
     private volatile int speedTempVar;
 
     public void setSpeedTempVar(int temp) {
@@ -458,6 +463,12 @@ public class ClientThread extends Thread {
                 if(EnergyArr.size() > 0){
 //                    Log.e("calculate", "EnergyArr数组的长度:" + EnergyArr + EnergyArr.size());
                     EnergyArr.clear();
+                    E2array.clear();
+                    Earray.clear();
+                    Amp2array.clear();
+                    timesArray.clear();
+                    costArray.clear();
+                    costArray2.clear();
 //                    Log.e("calculate", "EnergyArr数组1的长度:" + EnergyArr + EnergyArr.size());
 
                 }
@@ -513,6 +524,8 @@ public class ClientThread extends Thread {
         if(speedTempVar > 16 && mCurrentMyData.size() == 35) {
             handleRecognize(speedTempVar, mCurrentMyData,timesarrayEvery,-0.46);
             mCurrentMyData = mCurrentMyData.subList(10, mCurrentMyData.size());  //每次替换掉窗口内前10条数据
+            //导致程序检测部分失效
+            mCurrentMyData.clear();
         }
 
         //如果数据长度达到40 再检测速度是否在60码以下
@@ -521,9 +534,8 @@ public class ClientThread extends Thread {
 //            handleRecognize(mCurrentMyData);
             handleRecognize(speedTempVar, mCurrentMyData,timesarrayEvery2,-0.5);
             mCurrentMyData = mCurrentMyData.subList(10, mCurrentMyData.size());
-        }
-        else{
-
+            //导致程序检测部分失效
+            mCurrentMyData.clear();
         }
         Log.i("test","文件名Client"+ anInt);
         filename = new File(Environment.getExternalStorageDirectory(), "/sensor/" +number + ".txt");

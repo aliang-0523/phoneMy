@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 26
     buildToolsVersion '28.0.3'
 
     defaultConfig {
         applicationId "com.example.fan.bluetoothcommunication"
-        minSdkVersion 15
-        targetSdkVersion 23
+        minSdkVersion 14
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
     }
@@ -22,6 +22,9 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'junit:junit:4.12'
+
+    implementation project(':aars')
+    implementation project(':models')
     //    compile 'com.android.support:appcompatappcompat-v7-23.0.1-v7:23.1.1'
     implementation 'com.android.support:design:23.1.1'
     implementation 'com.android.support:support-v4:23.1.1'
