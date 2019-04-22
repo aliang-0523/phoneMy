@@ -4,8 +4,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
+import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -17,20 +19,14 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
@@ -38,6 +34,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.fan.bluetoothcommunication.Service.BackGroupService;
 import com.example.fan.bluetoothcommunication.Threads.ClientThread;
 
 import org.achartengine.GraphicalView;
@@ -54,7 +51,6 @@ public class AtyClient extends Activity {
 
     public String s =null;
     WriteThread writeThread=new WriteThread(AtyClient.this,s);
-    public int number;
     public int numberSensorA;
     private static Sensor sensor1;
     private static Sensor sensor2;
@@ -62,8 +58,7 @@ public class AtyClient extends Activity {
     private SensorManager sensorManager = null;
     private static Boolean Tag=false;
 
-
-
+    public Speed speedAT=new Speed(0);
 
     private LinearLayout xCurveLayout;// 存放x轴图表的布局容器
     private LinearLayout yCurveLayout;// 存放y轴图表的布局容器
@@ -77,6 +72,22 @@ public class AtyClient extends Activity {
     private boolean isConnected;
     private BluetoothDevice device;
     private ClientThread clientThread;
+
+
+    ServiceConnection conn=new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Toast.makeText(AtyClient.this,"开启服务",Toast.LENGTH_SHORT).show();
+            BackGroupService.MyBinder myBinder=(BackGroupService.MyBinder) service;
+            speedAT=myBinder.getSpeed();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+
     /*初始化视图*/
     private void initView() {
         //连接的是蓝牙设备
@@ -120,10 +131,12 @@ public class AtyClient extends Activity {
         clientThread = new ClientThread(device, handler, this);
         clientThread.start();
         btnToggle.setEnabled(false);
+        final Intent intent=new Intent(this,BackGroupService.class);
         btnToggle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                     if (TextUtils.equals(btnToggle.getText(), "启动")) {
+                        bindService(intent,conn,BIND_AUTO_CREATE);
                         btnToggle.setText("停止");
                         clientThread.addFileNumber();
                         clientThread.PAUSE_WRITE = false; //将加速度传感器数据写入文档的标志位
@@ -139,6 +152,7 @@ public class AtyClient extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         this.sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
         sensor1 = this.sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensor2 = this.sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
@@ -303,7 +317,7 @@ public class AtyClient extends Activity {
         //获取到GPS_PROVIDER
         Location location = getLocation();
         //更新位置信息显示到TextView
-        updata(location);
+        updateLoc(location);
     }
     private Location getLocation() {
         //查找服务信息
@@ -334,10 +348,9 @@ public class AtyClient extends Activity {
     private final LocationListener locationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
             // TODO Auto-generated method stub
-            Toast.makeText(AtyClient.this, "Location changed", Toast.LENGTH_SHORT).show();
             if (location != null)
                 System.out.println("GPS定位信息:");
-            updata(location);
+            updateLoc(location);
 
         }
         public void onProviderDisabled(String provider) {
@@ -352,7 +365,7 @@ public class AtyClient extends Activity {
     };
     public LocationManager mLocationManager;//位置管理器
     private boolean isWritingGPS;
-    private void updata(Location location) {
+    private void updateLoc(Location location) {
 //        Toast.makeText(AtyClient.this, "speed:" + location.getSpeed(), Toast.LENGTH_SHORT).show();
         if (isWritingGPS) {
             int number = clientThread.number;
@@ -380,8 +393,8 @@ public class AtyClient extends Activity {
                 sb.append(location.getBearing());
                 System.out.println(sb);
             }
-            Toast.makeText(AtyClient.this, "updating speed", Toast.LENGTH_SHORT).show();
-            float speedTempVar = location.getSpeed();
+
+            float speedTempVar = speedAT.getSpeed();
             clientThread.setSpeedTempVar(Math.round(speedTempVar));
             writeToFile(Math.round(speedTempVar));
         }
