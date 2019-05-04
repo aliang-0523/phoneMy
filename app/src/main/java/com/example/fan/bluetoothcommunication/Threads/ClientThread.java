@@ -54,7 +54,7 @@ public class ClientThread extends Thread {
     }
 
 
-    public int number;
+    public static int number;
     public File filename;
     File filename1;
     File filename2;
@@ -125,7 +125,7 @@ public class ClientThread extends Thread {
 
                     //当手机的GPS数据的speed不为0  再追加到传感器数据后面 并写入文件
                      //if(speedTempVar!=0){
-                        line+=" "+speedTempVar;
+                        line+=" "+speedTempVar+" "+CurentTimeString.getTime();
                         writeToFile(line);
                       //}
 

@@ -3,6 +3,7 @@ package com.example.fan.bluetoothcommunication;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
@@ -19,6 +20,7 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -26,6 +28,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -77,7 +80,6 @@ public class AtyClient extends Activity {
     ServiceConnection conn=new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            Toast.makeText(AtyClient.this,"开启服务",Toast.LENGTH_SHORT).show();
             BackGroupService.MyBinder myBinder=(BackGroupService.MyBinder) service;
             speedAT=myBinder.getSpeed();
         }
@@ -136,7 +138,7 @@ public class AtyClient extends Activity {
             @Override
             public void onClick(View v) {
                     if (TextUtils.equals(btnToggle.getText(), "启动")) {
-                        bindService(intent,conn,BIND_AUTO_CREATE);
+                        bindService(intent,conn,Service.BIND_AUTO_CREATE);
                         btnToggle.setText("停止");
                         clientThread.addFileNumber();
                         clientThread.PAUSE_WRITE = false; //将加速度传感器数据写入文档的标志位
@@ -151,6 +153,11 @@ public class AtyClient extends Activity {
     }
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Intent ignore = new Intent();
+        ignore.setData(Uri.parse("package:"+this.getPackageName()));
+        ignore.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+        this.startActivity(ignore);
+
         super.onCreate(savedInstanceState);
 
         this.sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
@@ -348,6 +355,7 @@ public class AtyClient extends Activity {
     private final LocationListener locationListener = new LocationListener() {
         public void onLocationChanged(Location location) {
             // TODO Auto-generated method stub
+            //Toast.makeText(AtyClient.this, "speed:" + speedAT.getSpeed(), Toast.LENGTH_SHORT).show();
             if (location != null)
                 System.out.println("GPS定位信息:");
             updateLoc(location);
@@ -366,18 +374,18 @@ public class AtyClient extends Activity {
     public LocationManager mLocationManager;//位置管理器
     private boolean isWritingGPS;
     private void updateLoc(Location location) {
-//        Toast.makeText(AtyClient.this, "speed:" + location.getSpeed(), Toast.LENGTH_SHORT).show();
+        //Toast.makeText(AtyClient.this, "speed:" + speedAT.getSpeed(), Toast.LENGTH_SHORT).show();
         if (isWritingGPS) {
-            int number = clientThread.number;
-            gpsFile = new File(Environment.getExternalStorageDirectory(), "/gps/" + number + ".txt");
-            gpsFile.getParentFile().mkdirs();
-            if (!gpsFile.exists()) {
-                try {
-                    gpsFile.createNewFile();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+//            int number = clientThread.number;
+//            gpsFile = new File(Environment.getExternalStorageDirectory(), "/gps/" + number + ".txt");
+//            gpsFile.getParentFile().mkdirs();
+//            if (!gpsFile.exists()) {
+//                try {
+//                    gpsFile.createNewFile();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
             if (location != null) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("实时的位置信息:\n");
@@ -396,7 +404,7 @@ public class AtyClient extends Activity {
 
             float speedTempVar = speedAT.getSpeed();
             clientThread.setSpeedTempVar(Math.round(speedTempVar));
-            writeToFile(Math.round(speedTempVar));
+            //writeToFile(Math.round(speedTempVar));
         }
     }
     File gpsFile;
